@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Transfert de fichiers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .folder {
+        cursor: pointer;
+      }
+
+      .folder-content {
+        display: none;
+        margin-left: 20px;
+      }
+    </style>
+  </head>
+
+  <body
+    class="bg-gray-900 text-white flex flex-col items-center min-h-screen p-6"
+  >
+    <h1 class="text-3xl font-bold mb-6">
+      📂 Transfert de fichiers vers Filemoon
+    </h1>
+
+    <div class="flex w-full max-w-4xl">
+      <!-- Section locale -->
+      <div class="w-1/2 p-4 bg-gray-800 rounded-lg shadow-lg">
+        <h2 class="text-xl font-bold mb-3">📁 Fichiers & dossiers locaux</h2>
+        <ul id="local-files" class="space-y-2">
+          <!-- Tree structure loaded dynamically -->
+        </ul>
+      </div>
+
+      <!-- Section distante -->
+      <div class="w-1/2 p-4 bg-gray-800 rounded-lg shadow-lg ml-4">
+        <h2 class="text-xl font-bold mb-3">🌐 Dossiers distants</h2>
+        <ul id="remote-folders" class="space-y-2">
+          <!-- Remote folders dynamically loaded -->
+        </ul>
+      </div>
+    </div>
+
+    <!-- Bouton de transfert -->
+    <button
+      id="transfer-btn"
+      class="mt-6 px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition"
+    >
+      📤 Envoyer les fichiers sélectionnés
+    </button>
+    <button
+      id="openModalBtn"
+      class="mt-6 px-6 py-3 bg-green-600 rounded-lg hover:bg-green-700 transition"
+    >
+      📂 Ajouter un élément
+    </button>
+
+    <%- include('./partials/newFolderComponents.ejs') %> <%-
+    include('./partials/playListActionBarComponents.ejs') %>
+    <!-- Inclusion de la popup -->
+    <script>
+          document.addEventListener("DOMContentLoaded", async () => {
+            await loadLocalFiles();
+            await loadRemoteFolders();
+
+            document
+              .getElementById("remote-folders")
+              .addEventListener("change", (e) => {
+                document
+                  .querySelectorAll("#remote-folders input")
+                  .forEach((input) => {
+                    if (input !== e.target) input.checked = false;
+                  });
+              });
+
+            document
+              .getElementById("transfer-btn")
+              .addEventListener("click", async () => {
+                const selectedFiles = Array.from(
+                  document.querySelectorAll("#local-files input:checked")
+                ).map((input) => input.value);
+
+                const selectedFolder = document.querySelector(
+                  "#remote-folders input:checked"
+                )?.value;
+
+                if (selectedFiles.length === 0 || !selectedFolder) {
+                  alert(
+                    "Sélectionnez au moins un fichier local et un dossier distant."
+                  );
+                  return;
+                }
+
+                const response = await fetch("/transfer", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    files: selectedFiles,
+                    remoteFolder: selectedFolder,
+                  }),
+                });
+
+                const result = await response.json();
+                alert(result.message);
+              });
+          });
+
+
+          async function loadLocalFiles() {
+            const response = await fetch("/local-files");
+            const files = await response.json();
+            const list = document.getElementById("local-files");
+
+            function createTree(data, parent) {
+              data.forEach((item) => {
+                const li = document.createElement("li");
+
+                if (item.type === "folder") {
+                  li.innerHTML = `
+                                <div class="flex items-center space-x-2">
+                                    <input type="checkbox" class="folder-checkbox form-checkbox text-blue-500" value="${item.path}">
+                                    <div class="folder">📂 ${item.name}</div>
+                                <ul class="folder-content"></ul>
+                                </div>
+                            `;
+                  const ul = li.querySelector(".folder-content");
+                  createTree(item.children, ul);
+                  li.appendChild(ul);
+
+                  // Toggle folder visibility
+                  li.querySelector(".folder").addEventListener("click", () => {
+                    ul.style.display =
+                      ul.style.display === "none" ? "block" : "none";
+                  });
+
+                  // Handle selection propagation
+                  const folderCheckbox = li.querySelector(".folder-checkbox");
+                  folderCheckbox.addEventListener("change", (e) => {
+                    const isChecked = e.target.checked;
+                    ul.querySelectorAll("input").forEach(
+                      (child) => (child.checked = isChecked)
+                    );
+                  });
+                } else {
+                  li.innerHTML = `
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" value="${item.path}" class="form-checkbox text-blue-500">
+                                    <span>${item.name}</span>
+                                </label>
+                            `;
+                }
+
+                parent.appendChild(li);
+              });
+            }
+
+            createTree(files, list);
+          }
+
+          async function loadRemoteFolders(useCache=true) {
+              let folders;
+              if(useCache) {
+                  folders = <%- JSON.stringify(getFileMoonVirtualDir) %>;
+              }else {
+                  let response = await fetch("/remote-folders");
+                  folders = await response.json();
+                  console.log(folders);
+              }
+              const list = document.getElementById("remote-folders");
+
+            function createTree(data, parent) {
+              Object.entries(data).forEach(([key, value]) => {
+                const li = document.createElement("li");
+
+                li.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <input type="checkbox" class="folder-checkbox form-checkbox text-blue-500" value="${
+                  key.split(" - ID: ")[1]
+                }">
+                <div class="folder">📂 ${key.split(" - ID: ")[0]}</div>
+            <ul class="folder-content"></ul>
+            </div>
+        `;
+                const ul = li.querySelector(".folder-content");
+                createTree(value, ul);
+                li.appendChild(ul);
+
+                // Toggle folder visibility
+                li.querySelector(".folder").addEventListener("click", () => {
+                  ul.style.display = ul.style.display === "none" ? "block" : "none";
+                });
+
+                // Handle selection propagation
+                const folderCheckbox = li.querySelector(".folder-checkbox");
+                folderCheckbox.addEventListener("change", (e) => {
+                  const isChecked = e.target.checked;
+                  ul.querySelectorAll("input").forEach(
+                    (child) => (child.checked = isChecked)
+                  );
+                });
+
+                parent.appendChild(li);
+              });
+            }
+
+            createTree(folders, list);
+          }
+    </script>
+  </body>
+</html>

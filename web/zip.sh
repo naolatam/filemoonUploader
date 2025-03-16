@@ -1,0 +1,1 @@
+tar --exclude=./config --exclude=./data/* --exclude=./video --exclude=./node_modules -cvf  archive.tar ./

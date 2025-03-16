@@ -1,0 +1,116 @@
+<div id="playlistBar" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-[90%] max-w-4xl 
+    bg-gray-800 backdrop-blur-md text-white p-4 rounded-lg shadow-xl hidden transition-all duration-300">
+    
+    <div class="flex items-center justify-between space-x-4">
+        <!-- Formulaire de création de playlist -->
+        <div class="flex items-center space-x-4 flex-grow">
+            <!-- Nom de la Playlist -->
+            <input type="text" id="playlistName" placeholder="Nom de la Playlist"
+                class="p-2 rounded bg-gray-800 border border-gray-700 text-white placeholder-gray-400 w-full max-w-sm">
+
+            <!-- Ordre d'envoi -->
+             <label for="sendOrder">Ordre:</label>
+            <select id="sendOrder" class="p-2 rounded bg-gray-800 border border-gray-700 text-white w-40">
+                <option value="none">Aucun</option>
+                <option value="asc">Croissant</option>
+                <option value="desc">Décroissant</option>
+            </select>
+
+            <!-- Suppression après envoi -->
+            <label for="deleteAfterSend">Supprimer après envoi:</label>
+            <select id="deleteAfterSend" class="p-2 rounded bg-gray-800 border border-gray-700 text-white w-40">
+                <option value="no">Non</option>
+                <option value="yes">Oui</option>
+            </select>
+        </div>
+
+        <!-- Bouton Valider -->
+        <button id="createPlaylist" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded shadow-md">
+            ✅ Créer la Playlist
+        </button>
+    </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const playlistBar = document.getElementById("playlistBar");
+    const createPlaylistBtn = document.getElementById("createPlaylist");
+    const playlistNameInput = document.getElementById("playlistName");
+
+    let selectedLocal = 0;
+    let selectedRemote = 0;
+
+    function updatePlaylistBarVisibility() {
+      if (selectedLocal > 0 && selectedRemote > 0) {
+        playlistBar.classList.remove("hidden");
+      } else {
+        playlistBar.classList.add("hidden");
+      }
+    }
+
+    // Simulation de la sélection des fichiers (à adapter avec tes vrais checkboxes)
+    document.querySelectorAll("#local-files").forEach((item) => {
+      item.addEventListener("change", () => {
+        selectedLocal = document.querySelectorAll("#local-files input:checked").length;
+        updatePlaylistBarVisibility();
+      });
+    });
+
+    document.querySelectorAll("#remote-folders").forEach((item) => {
+      item.addEventListener("change", () => {
+        selectedRemote = document.querySelectorAll(
+          "#remote-folders input:checked"
+        ).length;
+        updatePlaylistBarVisibility();
+      });
+    });
+
+    // Création de la playlist
+    createPlaylistBtn.addEventListener("click", () => {
+      const playlistName = playlistNameInput.value.trim();
+      const sendOrder = document.getElementById("sendOrder").value;
+      const deleteAfterSend = document.getElementById("deleteAfterSend").value;
+
+      if (!playlistName) {
+        alert("Veuillez entrer un nom de playlist !");
+        return;
+      }
+      console.log(document.querySelectorAll("#local-files input:checked"))
+      const selectedLocalFiles = Array.from(document.querySelectorAll("#local-files input:checked")).map(
+        (input) => input.value
+      );
+      const selectedRemoteFolders = Array.from(document.querySelectorAll("#remote-folders input:checked")).map(
+        (input) => input.value
+      );
+
+      const playlistData = {
+        name: playlistName,
+        order: sendOrder,
+        deleteAfterSend: deleteAfterSend === "yes",
+        localFiles: selectedLocalFiles,
+        remoteFolders: selectedRemoteFolders
+      };
+
+      fetch('/playlist/new', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(playlistData),
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Success:', data);
+        alert(`Playlist "${playlistName}" créée !`);
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+        alert('Erreur lors de la création de la playlist.');
+      });
+
+
+      console.log("Nouvelle Playlist :", playlistData);
+      alert(`Playlist "${playlistName}" créée !`);
+    });
+  });
+</script>

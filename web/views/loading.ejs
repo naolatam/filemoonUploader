@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Filemoon Uploader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body
+    class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen"
+  >
+    <h1 class="text-4xl font-bold mb-4">🚀 Filemoon Uploader</h1>
+    <div class="bg-gray-900 flex items-center justify-center ">
+
+        <!-- Spinner -->
+        <div class="flex flex-col items-center">
+           <div class="w-12 h-12 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+           <p class="text-lg mt-4">Chargement...</p>
+           <!-- Conteneur pour afficher le statut de l'API -->
+           <p id="statusMessage" class="mt-2 text-gray-400">En attente de l'état du serveur...</p>
+       </div>
+       
+       <script>
+           async function fetchState() {
+               try {
+                   const response = await fetch('/api/state');
+                   const data = await response.json();
+       
+                   // Vérifier si l'API renvoie un status et un état
+                   if (data.status && data.state) {
+                       document.getElementById('statusMessage').textContent = `Statut: ${data.status} | État: ${data.state}`;
+                   } else {
+                       document.getElementById('statusMessage').textContent = "Données incorrectes reçues...";
+                   }
+                   if(data.state == "Ready!") location.reload()
+               } catch (error) {
+                   document.getElementById('statusMessage').textContent = "Erreur de connexion à l'API...";
+               }
+           }
+       
+           // Met à jour l'état toutes les 2 secondes
+           setInterval(fetchState, 2000);
+           
+           // Premier appel immédiat
+           fetchState();
+       </script>
+       
+       </div>
+  </body>
+</html>
+

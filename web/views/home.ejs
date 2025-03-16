@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body
+    class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen"
+  >
+    <h1 class="text-4xl font-bold mb-4">🚀 Filemoon Uploader</h1>
+    <% let stat = getStatistiques %>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="bg-gray-800 p-4 rounded-lg shadow-md">
+        <h2 class="text-2xl font-semibold">Number of files</h2>
+        <p class="text-4xl mt-2"><%= stat.files %></p>
+      </div>
+      <div class="bg-gray-800 p-4 rounded-lg shadow-md">
+        <h2 class="text-2xl font-semibold">Playlist</h2>
+        <p class="text-4xl mt-2"><%= stat.currentPlaylist %></p>
+      </div>
+      <div class="bg-gray-800 p-4 rounded-lg shadow-md">
+        <h2 class="text-2xl font-semibold">UploadedFile</h2>
+        <p class="text-4xl mt-2"><%= stat.uploadedFile %></p>
+      </div>
+      <div class="bg-gray-800 p-4 rounded-lg shadow-md">
+        <h2 class="text-2xl font-semibold">File on fileMoon</h2>
+        <p class="text-4xl mt-2"><%= stat.fileOnFilemoon %></p>
+      </div>
+    </div>
+    <p class="text-lg mb-6">
+      Sélectionnez vos vidéos et envoyez-les en toute simplicité.
+    </p>
+
+    <a
+      href="/upload"
+      class="px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition"
+    >
+      📤 Aller à l'upload
+    </a>
+  </body>
+</html>

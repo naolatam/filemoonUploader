@@ -1,0 +1,106 @@
+<div
+  id="folderModal"
+  class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden"
+>
+  <div class="bg-gray-900 p-6 rounded-lg shadow-lg w-96">
+    <h2 class="text-xl font-bold mb-4">📁 Sélectionner un dossier</h2>
+
+    <!-- Champ Nom -->
+    <label class="block text-sm font-semibold">Nom:</label>
+    <input
+      type="text"
+      id="folderName"
+      class="w-full p-2 mt-1 rounded bg-gray-800 border border-gray-700 text-white"
+    />
+
+    <!-- Sélecteur de dossier -->
+    <label class="block mt-4 text-sm font-semibold">Choisir un dossier:</label>
+    <select
+      id="folderSelect"
+      class="w-full p-2 mt-1 rounded bg-gray-800 border border-gray-700 text-white"
+    >
+      <option value="">Sélectionner...</option>
+    </select>
+
+    <!-- Boutons -->
+    <div class="mt-4 flex justify-end space-x-2">
+      <button
+        id="cancelBtn"
+        class="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded"
+      >
+        Annuler
+      </button>
+      <button
+        id="confirmBtn"
+        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded"
+      >
+        Valider
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const modal = document.getElementById("folderModal");
+    const openModalBtn = document.getElementById("openModalBtn");
+    const cancelBtn = document.getElementById("cancelBtn");
+    const confirmBtn = document.getElementById("confirmBtn");
+    const folderSelect = document.getElementById("folderSelect");
+
+    // Charger les dossiers dynamiquement
+    async function loadFolders() {
+      const response = await fetch("/remote-folders");
+      const data = await response.json();
+      folderSelect.innerHTML = '<option value="">Sélectionner...</option>';
+      generateOptions(data, folderSelect, "");
+    }
+
+    function generateOptions(obj, parentElement, prefix) {
+      Object.keys(obj).forEach((key) => {
+        const idMatch = key.match(/ID: (\d+)/);
+        const id = idMatch ? idMatch[1] : key;
+        const option = document.createElement("option");
+        option.value = id;
+        option.textContent = prefix + key;
+        parentElement.appendChild(option);
+
+        // Sous-dossiers
+        if (typeof obj[key] === "object" && Object.keys(obj[key]).length > 0) {
+          generateOptions(obj[key], parentElement, prefix + "↳ ");
+        }
+      });
+    }
+
+    // Ouvrir la popup
+    openModalBtn.addEventListener("click", async () => {
+      await loadFolders();
+      modal.classList.remove("hidden");
+    });
+
+    // Fermer la popup
+    cancelBtn.addEventListener("click", () => {
+      modal.classList.add("hidden");
+    });
+
+    // Valider
+    confirmBtn.addEventListener("click", async () => {
+      const name = document.getElementById("folderName").value;
+      const folderId = folderSelect.value;
+
+      if (!name || !folderId) {
+        alert("Veuillez remplir tous les champs !");
+        return;
+      }
+      let request = await fetch(
+        `/remote-folders/new?name=${name}&fldId=${folderId}`);
+      let response = await request.json();
+      document.getElementById("local-files").innerHTML = "";
+      loadLocalFiles();
+      document.getElementById("remote-folders").innerHTML = "";
+      loadRemoteFolders(false);
+
+      modal.classList.add("hidden");
+    });
+  });
+</script>
