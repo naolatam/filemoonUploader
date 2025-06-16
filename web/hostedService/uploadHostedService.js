@@ -14,7 +14,6 @@ const playListList = [];
 
 const run = async () => {
   console.log("Upload Hosted service started");
-  task();
   setInterval(async () => {
     await task();
   }, 1 * 15 * 1000);
