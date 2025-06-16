@@ -24,14 +24,15 @@ async function task() {
   console.log("Database Hosted service running");
 
   // Do something every 15 minutes
+  if(!await db.get("playlist")) {
+    await db.set("playlist", []);
+  }
   await db.set("status", "fetching virtual dir");
   let virtDir = await fileMoonService.fetchVirtualDir();
   await db.set("virtualDir", virtDir);
   await db.set("status", "Counting file");
   await db.set("filesCount", await countFiles(config.video_path));
-  if(!await db.get("playlist")) {
-    await db.set("playlist", []);
-  }
+
   await db.set("status", "Ready");
   await db.set("loading", false);
 
