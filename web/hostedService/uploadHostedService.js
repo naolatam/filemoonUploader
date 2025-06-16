@@ -14,10 +14,10 @@ const playListList = [];
 
 const run = async () => {
   console.log("Upload Hosted service started");
-
+  task();
   setInterval(async () => {
     await task();
-  }, 1 * 60 * 1000);
+  }, 1 * 15 * 1000);
 };
 
 async function task() {
@@ -34,7 +34,7 @@ async function task() {
   }
 
   for (let pl of playListList) {
-    let res = uploadNextFile(pl);
+    uploadNextFile(pl);
   }
 }
 
@@ -47,11 +47,10 @@ async function uploadCallback(file, pl) {
   if (file.uploadRequest.status == 200 || file.uploadRequest.status == 502) {
     pl.moveFileToUploaded(file);
     await playListService.updatePlaylist(pl);
-    if(pl.deleteAfter) {
-      fs.unlinkSync(file.getFilePath())
+    if (pl.deleteAfter) {
+      fs.unlinkSync(file.getFilePath());
     }
   }
-  console.log("Upload callback", file.uploadRequest.status);
   uploadNextFile(pl);
 }
 
@@ -59,18 +58,34 @@ async function uploadCallback(file, pl) {
  *
  * @param {PlaylistModel} pl
  */
-function uploadNextFile(pl) {
+async function uploadNextFile(pl) {
   if (pl.pendingUpload.length == 0) {
+    for (f of pl.playlist) {
+      if (!/.mp4|.mkv|.wav/.test(f.maskedPath)) {
+        let stat = fs.statfsSync(config.video_path + f.maskedPath)
+        if (stat) {
+          if(stat.isDirectory()) {
+            fs.rmSync(config.video_path + f.maskedPath, { recursive: true });
+          }else {
+            fs.unlinkSync(config.video_path + f.maskedPath);
+          }
+        }                
+
+        pl.removeFile(f);
+        playListService.updatePlaylist(pl);
+      }
+    }
     return -1;
   }
   let file = pl.getNextFileToUpload();
   if (!file) {
     return -1;
   }
-  
-  if(!/.mp4|.mkv|.wav/.test(file.maskedPath)) { 
-    pl.removeFile(file);
+
+  if (!/.mp4|.mkv|.wav/.test(file.maskedPath)) {
+    pl.moveFileToUploaded(file);
     playListService.updatePlaylist(pl);
+    uploadNextFile(pl);
     return -1;
   }
   if (file.uploadRequest == null) {

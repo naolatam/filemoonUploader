@@ -34,22 +34,13 @@ class PlaylistModel {
   }
 
   removeFile(file) {
-    this.playlist = this.playlist.filter((s) => {
-      console.log(s.maskedPath, file.maskedPath, !file.equals(s));
-      return !file.equals(s);
-    });
-    this.pendingUpload = this.pendingUpload.filter((s) => {
-      console.log(s.maskedPath, file.maskedPath, !file.equals(s));
-      return !file.equals(s);
-    });
+    this.playlist = this.playlist.filter((s) => !file.equals(s));
+    this.pendingUpload = this.pendingUpload.filter((s) => !file.equals(s));
     this.#sortPlaylist();
   }
 
   moveFileToUploaded(file) {
-    this.pendingUpload = this.pendingUpload.filter((s) => {
-      console.log(s.maskedPath, file.maskedPath, !file.equals(s));
-      return !file.equals(s);
-    });
+    this.pendingUpload = this.pendingUpload.filter((s) => !file.equals(s));
     this.uploaded.push(file);
   }
 
@@ -63,7 +54,11 @@ class PlaylistModel {
    */
   getNextFileToUpload() {
     let f = this.pendingUpload[0];
+    if (!f) {
+      return null;
+    }
     f = FileModel.parseFile(f);
+    this.pendingUpload[0] = f
     return f;
   }
 }

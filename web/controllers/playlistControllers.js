@@ -16,6 +16,11 @@ const FileModel = require("../models/fileModel");
  * @param {Request} req
  * @param {Response} res
  */
+exports.renderPlaylist = async (req, res) => {
+  res.render("playlist");
+}
+
+
 exports.getAllPlaylist = async (req, res) => {
     let all = await playlistService.getAllPlaylist();
   res.json(all);

@@ -6,7 +6,6 @@ const dbFilePath = path.join(__dirname, "../", config.db_path);
 const db = new QuickDB({ filePath: dbFilePath });
 
 const PlaylistModel = require("../models/playlistModel");
-
 /**
  *
  * @returns {PlaylistModel[]}
